@@ -10,11 +10,6 @@ import { useAuth } from '@/context/AuthContext';
 import type { User } from '@/types';
 import toast from 'react-hot-toast';
 import { format, addDays, startOfDay, parseISO } from 'date-fns';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import CheckoutForm from '../CheckoutForm';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface BookingModalProps {
   creator: User;
@@ -39,7 +34,6 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
   const [notes, setNotes] = useState('');
   const [booking, setBooking] = useState(false);
   const [step, setStep] = useState<'date' | 'slot' | 'confirm' | 'payment'>('date');
-  const [clientSecret, setClientSecret] = useState('');
   const [createdSessionId, setCreatedSessionId] = useState('');
 
   // Show 14 days from tomorrow
@@ -106,11 +100,6 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
       });
 
       if (creator.sessionRate > 0) {
-        // Fetch payment intent client secret
-        const { clientSecret: secret } = await api.post<{ clientSecret: string }>('/api/payments/create-intent', {
-          sessionId: session._id,
-        });
-        setClientSecret(secret);
         setCreatedSessionId(session._id);
         setStep('payment');
       } else {
@@ -285,15 +274,31 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
           )}
 
           {/* Step 4: Payment */}
-          {step === 'payment' && clientSecret && (
+          {step === 'payment' && createdSessionId && (
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Complete Payment</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Complete Payment (Dummy Mode)</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
                 You are paying ${ (creator.sessionRate / 100).toFixed(2) } to book this session.
+                Since we are in Dummy Mode, no real credit card is required!
               </p>
-              <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
-                <CheckoutForm onSuccess={onBooked} />
-              </Elements>
+              
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%', marginTop: '8px' }}
+                onClick={async () => {
+                  try {
+                    setBooking(true);
+                    await api.post('/api/payments/dummy-pay', { sessionId: createdSessionId });
+                    onBooked();
+                  } catch (err: any) {
+                    toast.error(err.message || 'Payment failed');
+                    setBooking(false);
+                  }
+                }}
+                disabled={booking}
+              >
+                {booking ? 'Processing...' : 'Simulate Payment'}
+              </button>
             </div>
           )}
         </div>

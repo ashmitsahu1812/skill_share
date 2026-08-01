@@ -93,4 +93,31 @@ router.post('/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
+/**
+ * POST /api/payments/dummy-pay
+ * Simulates a successful payment for testing without Stripe
+ */
+router.post('/dummy-pay', requireAuth, async (req, res, next) => {
+  try {
+    const { sessionId } = req.body;
+    const session = await Session.findByIdAndUpdate(
+      sessionId,
+      { paymentStatus: 'paid', status: 'confirmed' },
+      { new: true }
+    ).populate('creator learner');
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    await createNotification({
+      recipient: session.creator._id,
+      type: 'session_confirmed',
+      title: `Payment received for session with ${session.learner.displayName}`,
+      refModel: 'Session',
+      refId: session._id,
+    });
+
+    res.json({ success: true, session });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
