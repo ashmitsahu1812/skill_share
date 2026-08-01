@@ -50,7 +50,7 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       await api.put('/api/users/me', {
-        headline,
+        bio: headline,
         skillsToTeach,
         skillsToLearn,
         isCreator: skillsToTeach.length > 0

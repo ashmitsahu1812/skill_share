@@ -42,9 +42,9 @@ router.put('/me', requireAuth, uploadAvatar.single('avatar'), async (req, res, n
     const updates = {};
     if (displayName !== undefined) updates.displayName = displayName;
     if (bio !== undefined) updates.bio = bio;
-    if (skillsToTeach) updates.skillsToTeach = JSON.parse(skillsToTeach);
-    if (skillsToLearn) updates.skillsToLearn = JSON.parse(skillsToLearn);
-    if (categories) updates.categories = JSON.parse(categories);
+    if (skillsToTeach) updates.skillsToTeach = typeof skillsToTeach === 'string' ? JSON.parse(skillsToTeach) : skillsToTeach;
+    if (skillsToLearn) updates.skillsToLearn = typeof skillsToLearn === 'string' ? JSON.parse(skillsToLearn) : skillsToLearn;
+    if (categories) updates.categories = typeof categories === 'string' ? JSON.parse(categories) : categories;
     if (isCreator !== undefined) updates.isCreator = isCreator === 'true' || isCreator === true;
     if (sessionRate !== undefined) updates.sessionRate = Number(sessionRate);
     if (sessionDuration !== undefined) updates.sessionDuration = Number(sessionDuration);
