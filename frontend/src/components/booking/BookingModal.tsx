@@ -10,6 +10,11 @@ import { useAuth } from '@/context/AuthContext';
 import type { User } from '@/types';
 import toast from 'react-hot-toast';
 import { format, addDays, startOfDay, parseISO } from 'date-fns';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import CheckoutForm from '../CheckoutForm';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface BookingModalProps {
   creator: User;
@@ -33,7 +38,9 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
   const [skillTopic, setSkillTopic] = useState('');
   const [notes, setNotes] = useState('');
   const [booking, setBooking] = useState(false);
-  const [step, setStep] = useState<'date' | 'slot' | 'confirm'>('date');
+  const [step, setStep] = useState<'date' | 'slot' | 'confirm' | 'payment'>('date');
+  const [clientSecret, setClientSecret] = useState('');
+  const [createdSessionId, setCreatedSessionId] = useState('');
 
   // Show 14 days from tomorrow
   const dates = Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i + 1));
@@ -90,14 +97,25 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
 
     setBooking(true);
     try {
-      await api.post('/api/sessions', {
+      const { session } = await api.post<{ session: { _id: string } }>('/api/sessions', {
         creatorId: creator._id,
         scheduledAt: scheduledAt.toISOString(),
         skillTopic: skillTopic.trim(),
         notes: notes.trim(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      onBooked();
+
+      if (creator.sessionRate > 0) {
+        // Fetch payment intent client secret
+        const { clientSecret: secret } = await api.post<{ clientSecret: string }>('/api/payments/create-intent', {
+          sessionId: session._id,
+        });
+        setClientSecret(secret);
+        setCreatedSessionId(session._id);
+        setStep('payment');
+      } else {
+        onBooked();
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Booking failed');
     } finally {
@@ -123,18 +141,18 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
         <div style={{ padding: 24 }}>
           {/* Step indicator */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {(['date', 'slot', 'confirm'] as const).map((s, i) => (
+            {(['date', 'slot', 'confirm', ...(creator.sessionRate > 0 ? ['payment'] : [])] as const).map((s, i, arr) => (
               <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%',
-                  background: step === s ? 'var(--gradient-brand)' : (i < ['date','slot','confirm'].indexOf(step) ? 'var(--accent-success)' : 'var(--bg-secondary)'),
+                  background: step === s ? 'var(--gradient-brand)' : (i < arr.indexOf(step as any) ? 'var(--accent-success)' : 'var(--bg-secondary)'),
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 13, fontWeight: 700, color: '#fff',
                 }}>
-                  {i < ['date','slot','confirm'].indexOf(step) ? '✓' : i + 1}
+                  {i < arr.indexOf(step as any) ? '✓' : i + 1}
                 </div>
                 <span style={{ fontSize: 13, color: step === s ? 'var(--text-primary)' : 'var(--text-muted)', textTransform: 'capitalize' }}>{s}</span>
-                {i < 2 && <div style={{ width: 24, height: 1, background: 'var(--border-subtle)' }} />}
+                {i < arr.length - 1 && <div style={{ width: 24, height: 1, background: 'var(--border-subtle)' }} />}
               </div>
             ))}
           </div>
@@ -260,9 +278,22 @@ export default function BookingModal({ creator, onClose, onBooked }: BookingModa
                   disabled={booking || !skillTopic.trim()}
                   style={{ marginTop: 8 }}
                 >
-                  {booking ? 'Booking...' : creator.sessionRate > 0 ? `Book & Pay $${(creator.sessionRate/100).toFixed(2)}` : 'Confirm Booking (Free)'}
+                  {booking ? 'Processing...' : creator.sessionRate > 0 ? `Continue to Payment ($${(creator.sessionRate/100).toFixed(2)})` : 'Confirm Booking (Free)'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Step 4: Payment */}
+          {step === 'payment' && clientSecret && (
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Complete Payment</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+                You are paying ${ (creator.sessionRate / 100).toFixed(2) } to book this session.
+              </p>
+              <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
+                <CheckoutForm onSuccess={onBooked} />
+              </Elements>
             </div>
           )}
         </div>
