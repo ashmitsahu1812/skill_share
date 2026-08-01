@@ -161,7 +161,7 @@ export default function SignupPage() {
               <Link href="/login" style={{ color: 'var(--accent-secondary)', fontWeight: 600 }}>Sign in</Link>
             </p>
           </>
-        ) : (
+        ) : step === 'username' ? (
           /* Step 2: Choose username */
           <>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
