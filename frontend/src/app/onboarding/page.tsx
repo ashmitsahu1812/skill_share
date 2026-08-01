@@ -49,7 +49,7 @@ export default function OnboardingPage() {
 
     setLoading(true);
     try {
-      await api.put('/api/users/profile', {
+      await api.put('/api/users/me', {
         headline,
         skillsToTeach,
         skillsToLearn,
