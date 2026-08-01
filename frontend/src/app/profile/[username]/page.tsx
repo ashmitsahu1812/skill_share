@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { User, Post, Certificate } from '@/types';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
@@ -24,8 +25,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'certs'>('posts');
   const [showBooking, setShowBooking] = useState(searchParams.get('book') === 'true');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -60,6 +63,19 @@ export default function ProfilePage() {
       setFollowing(wasFollowing);
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  const handleMessage = async () => {
+    if (!me) { toast.error('Sign in to message'); return; }
+    if (!profile) return;
+    try {
+      setMessaging(true);
+      await api.post('/api/messages/conversations', { targetUserId: profile._id });
+      router.push('/messages');
+    } catch (err) {
+      toast.error('Could not start conversation');
+      setMessaging(false);
     }
   };
 
@@ -149,6 +165,13 @@ export default function ProfilePage() {
                       disabled={followLoading}
                     >
                       {following ? 'Following' : 'Follow'}
+                    </button>
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={handleMessage} 
+                      disabled={messaging}
+                    >
+                      {messaging ? '...' : '💬 Message'}
                     </button>
                     {profile.isCreator && (
                       <button className="btn btn-secondary" onClick={() => setShowBooking(true)}>

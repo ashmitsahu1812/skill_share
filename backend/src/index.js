@@ -8,7 +8,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const http = require('http');
 const { connectDB } = require('./config/db');
+const { initSocket } = require('./socket');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -19,6 +21,7 @@ const testRoutes = require('./routes/tests');
 const certificateRoutes = require('./routes/certificates');
 const notificationRoutes = require('./routes/notifications');
 const paymentRoutes = require('./routes/payments');
+const messageRoutes = require('./routes/messages');
 const { startReminderCron } = require('./services/reminderService');
 
 const app = express();
@@ -63,6 +66,7 @@ app.use('/api/tests', testRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/messages', messageRoutes);
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -80,13 +84,17 @@ app.use((req, res) => {
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocket(server);
 
 (async () => {
   await connectDB();
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🚀 SkillShare API running on http://localhost:${PORT}`);
     startReminderCron();
   });
 })();
 
-module.exports = app;
+module.exports = { app, server };
