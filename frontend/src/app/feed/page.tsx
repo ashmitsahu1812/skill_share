@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import PostCard from '@/components/feed/PostCard';
+import RightSidebar from '@/components/feed/RightSidebar';
 import { api } from '@/lib/api';
 import type { Post } from '@/types';
 
@@ -68,8 +69,21 @@ export default function FeedPage() {
 
   return (
     <AppLayout>
-      <div style={{ padding: '24px 16px', maxWidth: 600, margin: '0 auto', paddingBottom: 'calc(var(--bottom-nav-h) + 24px)' }}>
-        {/* Empty state */}
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 16px', paddingBottom: 'calc(var(--bottom-nav-h) + 24px)', display: 'grid', gridTemplateColumns: '1fr', gap: 32 }}>
+        {/* We use a CSS grid that falls back to 1fr on mobile, but uses two columns on desktop */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @media (min-width: 1024px) {
+            .feed-grid { grid-template-columns: minmax(0, 1fr) 320px !important; }
+            .right-sidebar-wrapper { display: block !important; }
+          }
+          .right-sidebar-wrapper { display: none; }
+        `}} />
+        
+        <div className="feed-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32, alignItems: 'start' }}>
+          
+          {/* Main Feed Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
         {!fetching && posts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 20px' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🌟</div>
@@ -111,6 +125,14 @@ export default function FeedPage() {
             </div>
           </div>
         )}
+          </div>
+          
+          {/* Right Sidebar Column */}
+          <div className="right-sidebar-wrapper">
+            <RightSidebar />
+          </div>
+
+        </div>
       </div>
     </AppLayout>
   );
