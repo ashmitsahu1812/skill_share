@@ -84,9 +84,9 @@ export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: 
   };
 
   return (
-    <article className="post-card" aria-label={`Post: ${post.title}`}>
+    <article className="post-card" aria-label={`Post: ${post.title}`} style={isFullscreen ? { height: '100%', borderRadius: 0, border: 'none', background: '#000', color: '#fff', position: 'relative' } : {}}>
       {/* Author header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', ...(isFullscreen ? { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, background: 'linear-gradient(rgba(0,0,0,0.6), transparent)' } : {}) }}>
         <Link href={`/profile/${post.author?.username || 'unknown'}`}>
           {post.author?.avatar
             ? <img src={post.author.avatar} alt={post.author?.displayName || 'User'} className="avatar avatar-md" />
@@ -100,7 +100,7 @@ export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: 
           {post.author?.isCreator && (
             <span className="badge badge-primary" style={{ marginLeft: 6, fontSize: 10 }}>Creator</span>
           )}
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: isFullscreen ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', marginTop: 2 }}>
             @{post.author?.username || 'unknown'} · {timeAgo(post.createdAt)}
           </div>
         </div>
@@ -109,15 +109,15 @@ export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: 
 
       {/* Media */}
       <div 
-        style={{ position: 'relative', cursor: 'pointer', height: isFullscreen ? '100%' : 'auto', display: 'flex', flexDirection: 'column' }} 
+        style={{ position: isFullscreen ? 'absolute' : 'relative', top: 0, left: 0, right: 0, bottom: 0, cursor: 'pointer', height: isFullscreen ? '100%' : 'auto', display: 'flex', flexDirection: 'column', zIndex: 1 }} 
         onDoubleClick={() => {
           if (!post.isLiked) handleLike();
           setShowHeart(true);
           setTimeout(() => setShowHeart(false), 1000);
         }}
       >
-        <Link href={`/post/${post._id}`} style={{ display: 'block', flex: 1 }}>
-          <div className="post-media" style={isFullscreen ? { height: '100%', borderRadius: 0 } : {}}>
+        <Link href={`/post/${post._id}`} style={{ display: 'block', flex: 1, height: '100%' }}>
+          <div className="post-media" style={isFullscreen ? { height: '100%', borderRadius: 0, aspectRatio: 'unset' } : {}}>
             {post.mediaType === 'video' ? (
               <video
                 src={post.mediaUrl}
@@ -163,11 +163,11 @@ export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: 
       </div>
 
       {/* Content */}
-      <div style={{ padding: '12px 16px' }}>
-        <Link href={`/post/${post._id}`} style={{ textDecoration: 'none' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{post.title}</h3>
+      <div style={{ padding: '12px 16px', ...(isFullscreen ? { position: 'absolute', bottom: 50, left: 0, right: 0, zIndex: 5, paddingTop: 60, pointerEvents: 'none', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))' } : {}) }}>
+        <Link href={`/post/${post._id}`} style={{ textDecoration: 'none', pointerEvents: isFullscreen ? 'auto' : 'auto' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: isFullscreen ? '#fff' : 'var(--text-primary)', marginBottom: 4 }}>{post.title}</h3>
           {post.description && (
-            <p className="truncate-2" style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{post.description}</p>
+            <p className="truncate-2" style={{ fontSize: 14, color: isFullscreen ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)', lineHeight: 1.5 }}>{post.description}</p>
           )}
         </Link>
 
@@ -186,7 +186,7 @@ export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: 
         display: 'flex', alignItems: 'center', padding: '8px 16px 14px', gap: 4, 
         borderTop: isFullscreen ? 'none' : '1px solid var(--border-subtle)',
         position: isFullscreen ? 'absolute' : 'relative',
-        bottom: isFullscreen ? 120 : 'auto',
+        bottom: 0,
         left: 0, right: 0,
         background: isFullscreen ? 'linear-gradient(transparent, rgba(0,0,0,0.8))' : 'transparent',
         color: isFullscreen ? '#fff' : 'inherit',
