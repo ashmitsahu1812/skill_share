@@ -11,6 +11,7 @@ import { useState } from 'react';
 
 const navItems = [
   { href: '/feed',          icon: '🏠', label: 'Feed' },
+  { href: '/reels',         icon: '🎬', label: 'Reels' },
   { href: '/explore',       icon: '🔍', label: 'Explore' },
   { href: '/discover',      icon: '🔥', label: 'Discover' },
   { href: '/sessions',      icon: '📅', label: 'Sessions' },

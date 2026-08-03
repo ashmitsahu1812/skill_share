@@ -1,7 +1,6 @@
 'use client';
 /**
- * Feed Page — Main Instagram-style infinite scroll feed
- * Shows posts from followed creators + own posts
+ * Reels Page — TikTok-style infinite scroll video feed
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,7 +11,7 @@ import PostCard from '@/components/feed/PostCard';
 import { api } from '@/lib/api';
 import type { Post } from '@/types';
 
-export default function FeedPage() {
+export default function ReelsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -30,11 +29,11 @@ export default function FeedPage() {
     if (fetching || !hasMore) return;
     setFetching(true);
     try {
-      const res = await api.get<{ posts: Post[]; hasMore: boolean }>(`/api/posts/feed?page=${pageNum}&limit=10`);
+      const res = await api.get<{ posts: Post[]; hasMore: boolean }>(`/api/posts/feed?page=${pageNum}&limit=10&mediaType=video`);
       setPosts(prev => pageNum === 1 ? res.posts : [...prev, ...res.posts]);
       setHasMore(res.hasMore);
     } catch (err) {
-      console.error('Failed to load feed:', err);
+      console.error('Failed to load reels:', err);
     } finally {
       setFetching(false);
     }
@@ -68,14 +67,24 @@ export default function FeedPage() {
 
   return (
     <AppLayout>
-      <div style={{ padding: '24px 16px', maxWidth: 600, margin: '0 auto', paddingBottom: 'calc(var(--bottom-nav-h) + 24px)' }}>
+      <div 
+        style={{ 
+          height: '100vh', 
+          overflowY: 'scroll', 
+          scrollSnapType: 'y mandatory',
+          scrollBehavior: 'smooth',
+          background: '#000', // Dark mode specific to feed
+          paddingBottom: 'var(--bottom-nav-h)'
+        }}
+        className="hide-scrollbar"
+      >
         {/* Empty state */}
         {!fetching && posts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>🌟</div>
-            <h2 style={{ fontSize: 22, marginBottom: 8 }}>Nothing here yet</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-              Follow some creators to see their posts in your feed.
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#fff', scrollSnapAlign: 'start', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🎬</div>
+            <h2 style={{ fontSize: 22, marginBottom: 8 }}>No videos yet</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 24 }}>
+              Follow creators who post videos to see them here!
             </p>
             <a href="/explore" className="btn btn-primary">
               Explore Creators
@@ -84,9 +93,11 @@ export default function FeedPage() {
         )}
 
         {/* Posts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {posts.map(post => (
-            <PostCard key={post._id} post={post} />
+            <div key={post._id} style={{ height: '100vh', scrollSnapAlign: 'start', position: 'relative' }}>
+              <PostCard post={post} isFullscreen />
+            </div>
           ))}
         </div>
 
@@ -95,9 +106,11 @@ export default function FeedPage() {
 
         {/* Loading skeleton */}
         {fetching && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginTop: posts.length ? 32 : 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[1, 2].map(i => (
-              <div key={i} className="skeleton" style={{ width: '100%', height: 400, borderRadius: 'var(--radius-lg)' }} />
+              <div key={i} style={{ height: '100vh', scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="skeleton" style={{ width: '100%', maxWidth: 460, height: '80%', borderRadius: 'var(--radius-lg)' }} />
+              </div>
             ))}
           </div>
         )}
@@ -106,7 +119,7 @@ export default function FeedPage() {
         {!hasMore && posts.length > 0 && (
           <div style={{ textAlign: 'center', padding: '32px', color: 'rgba(255,255,255,0.5)', fontSize: 14, scrollSnapAlign: 'start', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div>
-              ✦ You&apos;ve seen all posts.<br/> 
+              ✦ You&apos;ve seen all reels.<br/> 
               <a href="/explore" style={{ color: 'var(--accent-primary)', marginTop: 12, display: 'inline-block' }}>Explore more creators →</a>
             </div>
           </div>

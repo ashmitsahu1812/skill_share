@@ -26,14 +26,17 @@ const { createNotification } = require('../services/notificationService');
  */
 router.get('/feed', requireAuth, async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, mediaType } = req.query;
     const me = await User.findOne({ firebaseUid: req.firebaseUser.uid }).select('following').lean();
     if (!me) return res.status(404).json({ error: 'User not found' });
 
     const skip = (Number(page) - 1) * Number(limit);
     const authorIds = [...me.following, me._id]; // include own posts
 
-    const posts = await Post.find({ author: { $in: authorIds } })
+    let query = { author: { $in: authorIds } };
+    if (mediaType) query.mediaType = mediaType;
+
+    const posts = await Post.find(query)
       .populate('author', 'username displayName avatar isCreator')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -47,7 +50,7 @@ router.get('/feed', requireAuth, async (req, res, next) => {
       isSaved: p.saves?.some(uid => uid.toString() === me._id.toString()),
     }));
 
-    const total = await Post.countDocuments({ author: { $in: authorIds } });
+    const total = await Post.countDocuments(query);
     res.json({ posts: enriched, total, page: Number(page), hasMore: skip + enriched.length < total });
   } catch (err) { next(err); }
 });

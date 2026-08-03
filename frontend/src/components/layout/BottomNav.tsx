@@ -9,11 +9,10 @@ import { usePathname } from 'next/navigation';
 
 const items = [
   { href: '/feed',          icon: '🏠', label: 'Feed' },
-  { href: '/explore',       icon: '🔍', label: 'Explore' },
-  { href: '/matches',       icon: '🤝', label: 'Match' },
+  { href: '/reels',         icon: '🎬', label: 'Reels' },
+  { href: '/discover',      icon: '🔥', label: 'Discover' },
   { href: '/post/create',   icon: '➕', label: 'Create' },
   { href: '/sessions',      icon: '📅', label: 'Sessions' },
-  { href: '/notifications', icon: '🔔', label: 'Alerts' },
 ];
 
 export default function BottomNav() {
