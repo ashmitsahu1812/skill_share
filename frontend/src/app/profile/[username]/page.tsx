@@ -114,6 +114,8 @@ export default function ProfilePage() {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: 24, fontWeight: 800 }}>{profile.displayName}</h1>
+                <span className="badge badge-warning">🏆 Lvl {profile.level || 1}</span>
+                <span className="badge badge-secondary">✨ {profile.xp || 0} XP</span>
                 {profile.isCreator && <span className="badge badge-primary">✦ Creator</span>}
                 {profile.isVerified && <span style={{ color: 'var(--accent-tertiary)', fontSize: 18 }}>✔</span>}
               </div>

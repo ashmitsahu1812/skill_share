@@ -49,14 +49,7 @@ export default function SessionsPage() {
 
   const handleJoin = async (session: Session) => {
     setJoiningId(session._id);
-    try {
-      const { roomUrl } = await api.get<{ roomUrl: string }>(`/api/sessions/${session._id}/join`);
-      window.open(roomUrl, '_blank', 'noopener,noreferrer');
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Cannot join session yet');
-    } finally {
-      setJoiningId(null);
-    }
+    router.push(`/session/${session._id}`);
   };
 
   const handleCancel = async (sessionId: string) => {

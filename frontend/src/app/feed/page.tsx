@@ -68,21 +68,23 @@ export default function FeedPage() {
 
   return (
     <AppLayout>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800 }}>Your Feed</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 2 }}>Posts from creators you follow</p>
-          </div>
-        </div>
-
+      <div 
+        style={{ 
+          height: '100vh', 
+          overflowY: 'scroll', 
+          scrollSnapType: 'y mandatory',
+          scrollBehavior: 'smooth',
+          background: '#000', // Dark mode specific to feed
+          paddingBottom: 'var(--bottom-nav-h)'
+        }}
+        className="hide-scrollbar"
+      >
         {/* Empty state */}
         {!fetching && posts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#fff', scrollSnapAlign: 'start', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🌟</div>
             <h2 style={{ fontSize: 22, marginBottom: 8 }}>Nothing here yet</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 24 }}>
               Follow some creators to see their posts in your feed.
             </p>
             <a href="/explore" className="btn btn-primary">
@@ -92,9 +94,11 @@ export default function FeedPage() {
         )}
 
         {/* Posts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {posts.map(post => (
-            <PostCard key={post._id} post={post} />
+            <div key={post._id} style={{ height: '100vh', scrollSnapAlign: 'start', position: 'relative' }}>
+              <PostCard post={post} isFullscreen />
+            </div>
           ))}
         </div>
 
@@ -103,21 +107,10 @@ export default function FeedPage() {
 
         {/* Loading skeleton */}
         {fetching && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[1, 2].map(i => (
-              <div key={i} className="post-card">
-                <div style={{ display: 'flex', gap: 12, padding: '14px 16px' }}>
-                  <div className="skeleton" style={{ width: 44, height: 44, borderRadius: '50%' }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="skeleton" style={{ height: 14, width: '40%' }} />
-                    <div className="skeleton" style={{ height: 12, width: '25%' }} />
-                  </div>
-                </div>
-                <div className="skeleton" style={{ height: 300 }} />
-                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div className="skeleton" style={{ height: 14, width: '70%' }} />
-                  <div className="skeleton" style={{ height: 12, width: '90%' }} />
-                </div>
+              <div key={i} style={{ height: '100vh', scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="skeleton" style={{ width: '100%', maxWidth: 460, height: '80%', borderRadius: 'var(--radius-lg)' }} />
               </div>
             ))}
           </div>
@@ -125,8 +118,11 @@ export default function FeedPage() {
 
         {/* End of feed */}
         {!hasMore && posts.length > 0 && (
-          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: 14 }}>
-            ✦ You&apos;ve seen all posts. <a href="/explore" style={{ color: 'var(--accent-secondary)' }}>Explore more creators →</a>
+          <div style={{ textAlign: 'center', padding: '32px', color: 'rgba(255,255,255,0.5)', fontSize: 14, scrollSnapAlign: 'start', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div>
+              ✦ You&apos;ve seen all posts.<br/> 
+              <a href="/explore" style={{ color: 'var(--accent-primary)', marginTop: 12, display: 'inline-block' }}>Explore more creators →</a>
+            </div>
           </div>
         )}
       </div>

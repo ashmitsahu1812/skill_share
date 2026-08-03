@@ -14,14 +14,16 @@ import toast from 'react-hot-toast';
 interface PostCardProps {
   post: Post;
   onUpdate?: (updated: Post) => void;
+  isFullscreen?: boolean;
 }
 
-export default function PostCard({ post: initialPost, onUpdate }: PostCardProps) {
+export default function PostCard({ post: initialPost, onUpdate, isFullscreen }: PostCardProps) {
   const { user } = useAuth();
   const [post, setPost] = useState(initialPost);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [addingComment, setAddingComment] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
 
   const handleLike = async () => {
     if (!user) { toast.error('Sign in to like posts'); return; }
@@ -106,39 +108,59 @@ export default function PostCard({ post: initialPost, onUpdate }: PostCardProps)
       </div>
 
       {/* Media */}
-      <Link href={`/post/${post._id}`} style={{ display: 'block' }}>
-        <div className="post-media">
-          {post.mediaType === 'video' ? (
-            <video
-              src={post.mediaUrl}
-              poster={post.thumbnailUrl}
-              muted
-              playsInline
-              preload="metadata"
-              onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
-              onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <img
-              src={post.mediaUrl}
-              alt={post.title}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          )}
-          {post.mediaType === 'video' && (
-            <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 6px', fontSize: 11, color: '#fff' }}>
-              ▶ Video
-            </div>
-          )}
-          {post.skillLevel && (
-            <div style={{ position: 'absolute', bottom: 12, left: 12 }}>
-              <span className="badge badge-warning" style={{ fontSize: 11 }}>{post.skillLevel}</span>
-            </div>
-          )}
-        </div>
-      </Link>
+      <div 
+        style={{ position: 'relative', cursor: 'pointer', height: isFullscreen ? '100%' : 'auto', display: 'flex', flexDirection: 'column' }} 
+        onDoubleClick={() => {
+          if (!post.isLiked) handleLike();
+          setShowHeart(true);
+          setTimeout(() => setShowHeart(false), 1000);
+        }}
+      >
+        <Link href={`/post/${post._id}`} style={{ display: 'block', flex: 1 }}>
+          <div className="post-media" style={isFullscreen ? { height: '100%', borderRadius: 0 } : {}}>
+            {post.mediaType === 'video' ? (
+              <video
+                src={post.mediaUrl}
+                poster={post.thumbnailUrl}
+                muted
+                playsInline
+                preload="metadata"
+                loop
+                onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <img
+                src={post.mediaUrl}
+                alt={post.title}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
+            {post.mediaType === 'video' && !isFullscreen && (
+              <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 6px', fontSize: 11, color: '#fff' }}>
+                ▶ Video
+              </div>
+            )}
+            {post.skillLevel && (
+              <div style={{ position: 'absolute', bottom: 12, left: 12 }}>
+                <span className="badge badge-warning" style={{ fontSize: 11 }}>{post.skillLevel}</span>
+              </div>
+            )}
+          </div>
+        </Link>
+        
+        {/* Animated Heart Overlay for double tap */}
+        {showHeart && (
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            fontSize: 100, pointerEvents: 'none', animation: 'heart-burst 1s ease-out forwards', zIndex: 10
+          }}>
+            ❤️
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div style={{ padding: '12px 16px' }}>
@@ -160,21 +182,30 @@ export default function PostCard({ post: initialPost, onUpdate }: PostCardProps)
       </div>
 
       {/* Action bar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px 14px', gap: 4, borderTop: '1px solid var(--border-subtle)' }}>
+      <div style={{ 
+        display: 'flex', alignItems: 'center', padding: '8px 16px 14px', gap: 4, 
+        borderTop: isFullscreen ? 'none' : '1px solid var(--border-subtle)',
+        position: isFullscreen ? 'absolute' : 'relative',
+        bottom: isFullscreen ? 120 : 'auto',
+        left: 0, right: 0,
+        background: isFullscreen ? 'linear-gradient(transparent, rgba(0,0,0,0.8))' : 'transparent',
+        color: isFullscreen ? '#fff' : 'inherit',
+        zIndex: 5
+      }}>
         {/* Like */}
-        <button className={`like-btn ${post.isLiked ? 'liked' : ''}`} onClick={handleLike} aria-label={post.isLiked ? 'Unlike' : 'Like'}>
+        <button className={`like-btn ${post.isLiked ? 'liked' : ''}`} onClick={handleLike} aria-label={post.isLiked ? 'Unlike' : 'Like'} style={isFullscreen ? { color: '#fff' } : {}}>
           <span style={{ fontSize: 18 }}>{post.isLiked ? '❤️' : '🤍'}</span>
           <span style={{ fontSize: 13 }}>{post.likeCount ?? post.likes?.length ?? 0}</span>
         </button>
 
         {/* Comments */}
-        <button className="like-btn" onClick={() => setShowComments(!showComments)} aria-label="Comments">
+        <button className="like-btn" onClick={() => setShowComments(!showComments)} aria-label="Comments" style={isFullscreen ? { color: '#fff' } : {}}>
           <span style={{ fontSize: 18 }}>💬</span>
           <span style={{ fontSize: 13 }}>{post.commentCount ?? post.comments?.length ?? 0}</span>
         </button>
 
         {/* Views */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 13, padding: '6px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: isFullscreen ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', fontSize: 13, padding: '6px 8px' }}>
           <span style={{ fontSize: 16 }}>👁</span>
           <span>{post.views ?? 0}</span>
         </div>
@@ -182,7 +213,7 @@ export default function PostCard({ post: initialPost, onUpdate }: PostCardProps)
         <div style={{ flex: 1 }} />
 
         {/* Save */}
-        <button className={`like-btn ${post.isSaved ? 'liked' : ''}`} onClick={handleSave} aria-label={post.isSaved ? 'Unsave' : 'Save'}>
+        <button className={`like-btn ${post.isSaved ? 'liked' : ''}`} onClick={handleSave} aria-label={post.isSaved ? 'Unsave' : 'Save'} style={isFullscreen ? { color: '#fff' } : {}}>
           <span style={{ fontSize: 18 }}>{post.isSaved ? '🔖' : '🔖'}</span>
         </button>
 
@@ -191,7 +222,7 @@ export default function PostCard({ post: initialPost, onUpdate }: PostCardProps)
           <Link
             href={`/profile/${post.author?.username || 'unknown'}?book=true`}
             className="btn btn-primary btn-sm"
-            style={{ marginLeft: 4, fontSize: 12 }}
+            style={{ marginLeft: 4, fontSize: 12, border: isFullscreen ? '1px solid rgba(255,255,255,0.2)' : 'none' }}
           >
             📅 Book
           </Link>
@@ -202,7 +233,7 @@ export default function PostCard({ post: initialPost, onUpdate }: PostCardProps)
           <Link
             href={`/test/${post.testId}`}
             className="btn btn-secondary btn-sm"
-            style={{ marginLeft: 4, fontSize: 12 }}
+            style={{ marginLeft: 4, fontSize: 12, background: isFullscreen ? 'rgba(255,255,255,0.2)' : 'var(--bg-card)', color: isFullscreen ? '#fff' : 'var(--text-primary)', border: isFullscreen ? 'none' : '1px solid var(--border-subtle)' }}
           >
             🧪 Test
           </Link>

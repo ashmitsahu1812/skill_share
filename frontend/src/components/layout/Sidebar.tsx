@@ -12,7 +12,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/feed',          icon: '🏠', label: 'Feed' },
   { href: '/explore',       icon: '🔍', label: 'Explore' },
-  { href: '/matches',       icon: '🤝', label: 'Matches' },
+  { href: '/discover',      icon: '🔥', label: 'Discover' },
   { href: '/sessions',      icon: '📅', label: 'Sessions' },
   { href: '/notifications', icon: '🔔', label: 'Notifications' },
 ];
@@ -50,6 +50,16 @@ export default function Sidebar() {
             <span>{item.label}</span>
           </Link>
         ))}
+
+        {user?.isCreator && (
+          <Link
+            href="/dashboard"
+            className={`nav-link ${pathname.startsWith('/dashboard') ? 'active' : ''}`}
+          >
+            <span style={{ fontSize: 18 }}>📈</span>
+            <span>Dashboard</span>
+          </Link>
+        )}
 
         <div className="divider" style={{ margin: '12px 4px' }} />
 

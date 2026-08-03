@@ -58,6 +58,8 @@ const userSchema = new mongoose.Schema({
   totalSessions: { type: Number, default: 0 },
   rating: { type: Number, default: 0, min: 0, max: 5 },
   ratingCount: { type: Number, default: 0 },
+  xp: { type: Number, default: 0 },
+  level: { type: Number, default: 1 },
 
   // Account
   isVerified: { type: Boolean, default: false },

@@ -47,6 +47,8 @@ export interface User {
   totalSessions: number;
   rating: number;
   ratingCount: number;
+  xp: number;
+  level: number;
   followerCount: number;
   followingCount: number;
   isFollowing?: boolean;
