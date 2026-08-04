@@ -10,7 +10,7 @@ router.get('/conversations', requireAuth, async (req, res, next) => {
   try {
     const me = await User.findOne({ firebaseUid: req.firebaseUser.uid });
     const conversations = await Conversation.find({ participants: me._id })
-      .populate('participants', 'displayName photoURL headline')
+      .populate('participants', 'displayName avatar bio')
       .populate('lastMessage.sender', 'displayName')
       .sort({ updatedAt: -1 });
     
@@ -20,29 +20,39 @@ router.get('/conversations', requireAuth, async (req, res, next) => {
   }
 });
 
+const mongoose = require('mongoose');
+
 // Get or create a conversation with a specific user
 router.post('/conversations', requireAuth, async (req, res, next) => {
   try {
     const { targetUserId } = req.body;
+    
+    // Validate targetUserId
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    const targetObjId = new mongoose.Types.ObjectId(targetUserId);
+
     const me = await User.findOne({ firebaseUid: req.firebaseUser.uid });
 
-    if (me._id.toString() === targetUserId) {
+    if (me._id.equals(targetObjId)) {
       return res.status(400).json({ error: "Cannot message yourself" });
     }
 
     let conversation = await Conversation.findOne({
-      participants: { $all: [me._id, targetUserId] }
-    }).populate('participants', 'displayName photoURL headline');
+      participants: { $all: [me._id, targetObjId] }
+    }).populate('participants', 'displayName avatar bio');
 
     if (!conversation) {
       conversation = await Conversation.create({
-        participants: [me._id, targetUserId]
+        participants: [me._id, targetObjId]
       });
-      conversation = await conversation.populate('participants', 'displayName photoURL headline');
+      conversation = await conversation.populate('participants', 'displayName avatar bio');
     }
 
     res.json(conversation);
   } catch (err) {
+    console.error('Error in POST /conversations:', err);
     next(err);
   }
 });

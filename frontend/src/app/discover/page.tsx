@@ -51,7 +51,10 @@ export default function DiscoverPage() {
         toast.success(`It's a match with ${match.displayName}!`);
         api.post('/api/messages/conversations', { targetUserId: id })
           .then(() => router.push('/messages'))
-          .catch(() => toast.error('Could not start conversation'));
+          .catch((err) => {
+            console.error('Failed to start conversation:', err);
+            toast.error('Could not start conversation: ' + (err.message || 'Unknown error'));
+          });
       }
     }
   };
